@@ -29,7 +29,7 @@
  final int      CUTOFF_FREQ  = 200;
  final PApplet  THIS_APP     = this;
  final int      DRAW_DELAY   = 10;
- final int      CREATE_POINT_INTERVAL = 10;
+ final int      CREATE_POINT_INTERVAL = 10; //the number of DRAW_DELAYs until a point is sampled
  
   /**
   * SoundPoint is a class representing one of the several instances of a brush stroke
