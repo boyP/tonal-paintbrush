@@ -10,8 +10,11 @@
  */
  
  //Dependencies
+ import http.requests.*;
  import java.net.*;
  import java.io.*;
+ 
+import processing.sound.*;
  
  import ddf.minim.*;
  import ddf.minim.analysis.*;
@@ -23,14 +26,16 @@
  import java.util.ArrayList;
 
  //Constants
- String SERVER_URL = "";
+ final String SERVER_URL = "http://192.168.4.1:80";
+ final int CUTOFF_FREQ = 200;
+ final PApplet thisApp = this;
  
  //Fields
  boolean isButtonOn;
  int currentASV;
  int currentStrokeID;
  PVector currentPos;
-
+ GetRequest getRequest;
  ArrayList<SoundPoint> soundPoints;
 
  
@@ -46,11 +51,15 @@
    PVector position;
    int strokeID;
    float analogSoundValue;
+   SqrOsc osc;
+   LowPass lpf;
    
    SoundPoint(PVector position, int strokeID, float analogValue) {
      this.position = position;
      this.strokeID = strokeID;
      this.analogSoundValue = analogValue;
+     this.osc = new SqrOsc(this);
+      
    }
  }
 
@@ -62,6 +71,7 @@
 
  void setup() {
    size(640, 520);
+   getRequest = new GetRequest(SERVER_URL);
    isButtonOn = false;
    currentStrokeID = 0;
    PVector currentPos = new PVector(0,0,0);
