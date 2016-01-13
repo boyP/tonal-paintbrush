@@ -4,22 +4,35 @@
              Ameya Kamat
              Mark McElwaine
              Mark Fernandez
+
+             Paint program
+             https://processing.org/discourse/beta/num_1165920458.html
  */
  
  //Dependencies
- import org.openkinect.freenect.*;
- import org.openkinect.processing.*;
  import java.net.*;
  import java.io.*;
  
+ import ddf.minim.*;
+ import ddf.minim.analysis.*;
+ import ddf.minim.effects.*;
+ import ddf.minim.signals.*;
+ import ddf.minim.spi.*;
+ import ddf.minim.ugens.*;
+
+ import java.util.ArrayList;
+
  //Constants
  String SERVER_URL = "";
  
  //Fields
  boolean isButtonOn;
- boolean currentASV;
- boolean currentStrokeID;
- Kinect kinect;
+ int currentASV;
+ int currentStrokeID;
+ PVector currentPos;
+
+ ArrayList<SoundPoint> soundPoints;
+
  
  /**
   * SoundPoint is a class representing one of the several instances of a brush stroke
@@ -30,16 +43,12 @@
   * analogSoundValue: The value of the sound played
   */
  class SoundPoint {
-   float x;
-   float y;
-   float z;
+   PVector position;
    int strokeID;
    float analogSoundValue;
    
-   SoundPoint(float x, float y, float z, int strokeID, float analogValue) {
-     this.x = x;
-     this.y = y;
-     this.z = z;
+   SoundPoint(PVector position, int strokeID, float analogValue) {
+     this.position = position;
      this.strokeID = strokeID;
      this.analogSoundValue = analogValue;
    }
@@ -48,13 +57,18 @@
 
  public class MarkObj {
     public boolean buttonState;
-    public double analogValue;
+    public int analogValue;
  }
 
  void setup() {
    size(640, 520);
    isButtonOn = false;
    currentStrokeID = 0;
+   PVector currentPos = new PVector(0,0,0);
+
+   soundPoints = new ArrayList<SoundPoint>();
+
+   //Kinect Setup
    setupKinect();
  }
  
@@ -77,7 +91,7 @@
     if(isButtonOn) {
       //On => Create soundPoints
       PVector pos = getPositionVector();
-      SoundPoint point = new SoundPoint(pos.x, pos.y, pos.z, currentStrokeID, currentASV);
+      SoundPoint point = new SoundPoint(pos, currentStrokeID, currentASV);
       if(sendPoint(point)) {
         print('Point sent with strokeID: ' + point.strokeID);
       }
@@ -137,19 +151,28 @@
   }
   
  /*=========================*
-  * Max Interface
+  * Sound Interface
   *=========================*/
 
   /**
-   * Sends the point to MAX via OSC, returns true if successful. 
+   * Go through the list of sounds and play the sounds
    */
-  boolean sendPoint(SoundPoint point) {
-    return true;
+  void playSounds(List<SoundPoint> soundPoints) {
+    for (point : soundPoints) {
+      int sound = point.analogSoundValue * calculateRatio(currentPos, point.position);
+      //Play sound
+    }
   }
 
-  void sendCurrentPosition() {
-
+  /**
+   * Calculate the distance between the current brush position and the sound point position.
+   * Returns: a fraction representing the fraction of the max volume the sound should be played at.
+   */
+  float calculateRatio(PVector currPos, PVector pos) {
+    return 1;
   }
+
+
 
 
   
