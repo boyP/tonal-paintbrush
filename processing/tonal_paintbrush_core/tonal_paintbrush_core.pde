@@ -1,45 +1,37 @@
 /**
- * TONAL PAINTBRUSH PROJECT CODE:
- * Authors:  Pratik Prakash
-             Ameya Kamat
-             Mark McElwaine
-             Mark Fernandez
-
-             Paint program
-             https://processing.org/discourse/beta/num_1165920458.html
+ * TONAL PAINTBRUSH // Build18 2016
+ 
+     Pratik Prakash
+     Ameya Kamat
+     Mark McElwaine
+     Mark Fernandez
+     
+   *** DEPENDENCIES ***
+   Processing Sound Library
+   HTTP Requests Library
+   
+   (to install, go to Sketch > Import Library > Add Library)
+   
+   ********************
+   
+   January 12th, 2016.
+            
  */
  
- //Dependencies
+ //imports
  import http.requests.*;
- import java.net.*;
- import java.io.*;
- 
-import processing.sound.*;
- 
- import ddf.minim.*;
- import ddf.minim.analysis.*;
- import ddf.minim.effects.*;
- import ddf.minim.signals.*;
- import ddf.minim.spi.*;
- import ddf.minim.ugens.*;
-
+ import processing.sound.*;
  import java.util.ArrayList;
+ import java.util.List;
 
  //Constants
- final String SERVER_URL = "http://192.168.4.1:80";
- final int CUTOFF_FREQ = 200;
- final PApplet thisApp = this;
+ final String   SERVER_URL   = "http://192.168.4.1:80";
+ final int      CUTOFF_FREQ  = 200;
+ final PApplet  THIS_APP     = this;
+ final int      DRAW_DELAY   = 10;
+ final int      CREATE_POINT_INTERVAL = 10;
  
- //Fields
- boolean isButtonOn;
- int currentASV;
- int currentStrokeID;
- PVector currentPos;
- GetRequest getRequest;
- ArrayList<SoundPoint> soundPoints;
-
- 
- /**
+  /**
   * SoundPoint is a class representing one of the several instances of a brush stroke
   * x:                The x position in 3-D space
   * y:                The y position in 3-D space
@@ -49,33 +41,37 @@ import processing.sound.*;
   */
  class SoundPoint {
    PVector position;
-   int strokeID;
-   float analogSoundValue;
+   int analogReading;
    SqrOsc osc;
    LowPass lpf;
    
-   SoundPoint(PVector position, int strokeID, float analogValue) {
+   SoundPoint(PVector position, int analogReading) {
      this.position = position;
-     this.strokeID = strokeID;
-     this.analogSoundValue = analogValue;
-     this.osc = new SqrOsc(this);
+     this.analogReading = analogReading;
+     osc = new SqrOsc(THIS_APP);
+     osc.freq(analogReadingToFrequency(analogReading));
+      osc.amp(0.0); //initialise with 0 amplitude
+      lpf = new LowPass(THIS_APP);
+      osc.play();
+      lpf.process(osc,CUTOFF_FREQ);
       
    }
  }
-
-
- public class MarkObj {
-    public boolean buttonState;
-    public int analogValue;
- }
+ 
+ //Fields
+ boolean buttonPressed = false;
+ int currentAnalogVal;
+ int currentASV;
+ PVector currentPos;
+ GetRequest getRequest;
+ ArrayList<SoundPoint> soundPoints;
+ int tickNumber = 0;
+ 
 
  void setup() {
    size(640, 520);
    getRequest = new GetRequest(SERVER_URL);
-   isButtonOn = false;
-   currentStrokeID = 0;
    PVector currentPos = new PVector(0,0,0);
-
    soundPoints = new ArrayList<SoundPoint>();
 
    //Kinect Setup
@@ -84,73 +80,50 @@ import processing.sound.*;
  
  void draw() {
 
-  //First poll webserver for button state changes
-  currState = pollWebServer();
+  delay(DRAW_DELAY);
+  
+  tickNumber++;
+  
+  //First check webserver to update button state
+  updateBrushState();
 
-  //Check whether the button changed from ON to OFF or vice versa
-  if(currState != isButtonOn) {
-      if(isButtonOn) {
-        //On -> Off
-        currentStrokeID++;
-      }
-      else {
-        //Off -> On
-      }
-  }
-  else {
-    if(isButtonOn) {
-      //On => Create soundPoints
+  updateSoundState();
+
+  if(buttonPressed) {
+    
+    if(tickNumber % CREATE_POINT_INTERVAL == 0) {
+      //Create soundPoints
       PVector pos = getPositionVector();
-      SoundPoint point = new SoundPoint(pos, currentStrokeID, currentASV);
-      if(sendPoint(point)) {
-        print('Point sent with strokeID: ' + point.strokeID);
-      }
+      SoundPoint newPoint = new SoundPoint(pos, currentAnalogVal);
+      soundPoints.add(newPoint);
     }
   }
 
-   drawKinect();
-  }
+  drawKinect();
  }
+ 
  
  /*=========================*
   * Web Server Polling
   *=========================*/
-  boolean pollWebServer() {
-
-    //First connect to the web server
-    //Get the JSON object from the web server
-    //Parse the JSON into buttonState and analogValue
-    //Update button state and return analogValue
-    boolean buttonState = false;
-    try {
-      MarkObj data = getInfo();
-      buttonState = data.buttonState;
-      currentASV = data.analogValue;
-    }
-    catch(Exception e) {
-      print("Problem with web server polling")
-    }
-
-    return buttonState;
+  boolean updateBrushState() {
+    getRequest.send();
+    String webTxt =  getRequest.getContent();
+    String [] webTxtArr = split(webTxt,':');
+    
+    currentAnalogVal = int(webTxtArr[1]);
+    buttonPressed = int(webTxtArr[0]) == 0;
+    return true;
   }
 
-  MarkObj getInfo()throws MalformedURLException, IOException{
-    InputStream input = new URL(SERVER_URL).openStream();
-    Reader reader = new InputStreamReader(input, "UTF-8");
-    MarkObj data = (MarkObj) new Gson().fromJson(reader,MarkObj.class);
-    return data;
-  }
-  
+
  /*=========================*
   * Kinect Interface
   *=========================*/
   void setupKinect() {
-
-
   }
+  
   void drawKinect() {
-   
-
   }
 
   /**
@@ -164,12 +137,22 @@ import processing.sound.*;
   * Sound Interface
   *=========================*/
 
+  void updateSoundState() {
+    if(soundPoints.size() == 0) {
+        return;
+    }
+    
+    for(SoundPoint sp : soundPoints) {
+       //Update amplitude based on distance 
+    }
+  }
+
   /**
    * Go through the list of sounds and play the sounds
    */
   void playSounds(List<SoundPoint> soundPoints) {
-    for (point : soundPoints) {
-      int sound = point.analogSoundValue * calculateRatio(currentPos, point.position);
+    for (SoundPoint point : soundPoints) {
+      //int sound = point.analogReading * calculateRatio(currentPos, point.position);
       //Play sound
     }
   }
@@ -183,6 +166,14 @@ import processing.sound.*;
   }
 
 
+
+  /**
+  * Conversion function from ADC reading to frequecy
+  *
+  */
+  int analogReadingToFrequency(int reading) {
+     return int(map(reading, 0, 1024, 100,1000)); 
+  }
 
 
   
