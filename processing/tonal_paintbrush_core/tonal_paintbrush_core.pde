@@ -32,8 +32,8 @@ import KinectPV2.*;
  final int      CUTOFF_FREQ  = 200;
  final PApplet  THIS_APP     = this;
  final int      DRAW_DELAY   = 5;
- final int      CREATE_POINT_INTERVAL = 10; //the number of DRAW_DELAYs until a point is sampled
- final float    DIST_THRESHOLD = 0.3;
+ final int      CREATE_POINT_INTERVAL = 7; //the number of DRAW_DELAYs until a point is sampled
+ final float    DIST_THRESHOLD = 0.8;
   /**
   * SoundPoint is a class representing one of the several instances of a brush stroke
   * x:                The x position in 3-D space
@@ -45,13 +45,13 @@ import KinectPV2.*;
  class SoundPoint {
    PVector position;
    int analogReading;
-   SqrOsc osc;
+   TriOsc osc;
    LowPass lpf;
    
    SoundPoint(PVector position, int analogReading) {
      this.position = position;
      this.analogReading = analogReading;
-     osc = new SqrOsc(THIS_APP);
+     osc = new TriOsc(THIS_APP);
      osc.freq(analogReadingToFrequency(analogReading));
       osc.amp(0.0); //initialise with 0 amplitude
       lpf = new LowPass(THIS_APP);
@@ -100,7 +100,7 @@ float rotX = PI;
     
     if(tickNumber % CREATE_POINT_INTERVAL == 0) {
       //Create soundPoints
-      PVector pos = getPositionVector();
+      PVector pos = new PVector(currentPos.x, currentPos.y, currentPos.z);
       SoundPoint newPoint = new SoundPoint(pos, currentAnalogVal);
       soundPoints.add(newPoint);
     }
@@ -259,12 +259,6 @@ void handState(int handState) {
   }
 }
 
-  /**
-   * Gets the current x,y,z position of the brush
-   */
-  PVector getPositionVector() {
-    return null;
-  }
   
  /*=========================*
   * Sound Interface
@@ -278,7 +272,7 @@ void handState(int handState) {
     for(SoundPoint sp : soundPoints) {
        //Update amplitude based on distance 
        float dist = currentPos.dist(sp.position);
-                     
+       println("\nDist: " + dist);
        if(dist > DIST_THRESHOLD) {
          sp.osc.amp(0.0);
        } else {
@@ -293,7 +287,7 @@ void handState(int handState) {
   *
   */
   int analogReadingToFrequency(int reading) {
-     return int(map(reading, 0, 1024, 100,1000)); 
+     return int(map(reading, 0, 1024, 200,1500)); 
   }
 
 
