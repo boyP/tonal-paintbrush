@@ -24,8 +24,8 @@
  import java.util.ArrayList;
  import java.util.List;
   
-import KinectPV2.KJoint;
-import KinectPV2.*;
+ import KinectPV2.KJoint;
+ import KinectPV2.*;
 
  //Constants
  final String   SERVER_URL   = "http://192.168.4.1:80";
@@ -63,41 +63,59 @@ import KinectPV2.*;
  
  //Fields
  boolean buttonPressed = false;
+ boolean isNewStroke = true;
  int currentAnalogVal;
  int currentASV;
  PVector currentPos;
  GetRequest getRequest;
- ArrayList<SoundPoint> soundPoints;
+ // ArrayList<SoundPoint> soundPoints;
+
+ int strokeIndex = 0;
+ ArrayList<ArrayList<SoundPoint>> strokes;
  int tickNumber = 0;
 
  KinectPV2 kinect;
-float zVal = 300;
-float rotX = PI;
+ float zVal = 300;
+ float rotX = PI;
  
+ //Colors 
+ /* UNCOMMENT WHEN YOU WANT TO ADD PAINT
+ final int NUM_COLORS = 9;
+ int Green = #009688;
+ int Yellow = #FFEB3B;
+ int Red = #E64A19;
+ int Blue = #03A9F4;
+ int Lime = #CDDC39;
+ int Orange = #FF9800;
+ int Purple = #7C4DFF;
+ int Brown = #795548;
+ int Pink = #F8BBD0;
+ int[] colors = {Green, Yellow, Red, Blue, Lime, Orange, Purple, Brown, Pink};
+ */
 
  void setup() {
    size(1024, 768,P3D);
    getRequest = new GetRequest(SERVER_URL);
    currentPos = new PVector(0,0,0);
-   soundPoints = new ArrayList<SoundPoint>();
+   // soundPoints = new ArrayList<SoundPoint>();
 
+   strokes = new ArrayList<ArrayList<SoundPoint>>();
    //Kinect Setup
    setupKinect();
  }
  
  void draw() {
 
-   if(keyPressed) {
-     if(key == 'c') {
-       for(SoundPoint sp : soundPoints) {
-         sp.osc.freq(3);
-       }
-       soundPoints.clear();
-       println("cleared all sounds");
-     }
-   }
-   
   delay(DRAW_DELAY);
+  
+  //Clear all
+  if(keyPressed) {
+    if(key == 'C') {
+      strokeIndex = 0;
+      isNewStroke = true;
+      strokes = new ArrayList<ArrayList<SoundPoint>>();
+    }
+  }
   
   tickNumber++;
   
@@ -108,12 +126,26 @@ float rotX = PI;
 
   if(buttonPressed) {
     
+    //Either creating a new stroke on in same stroke
     if(tickNumber % CREATE_POINT_INTERVAL == 0) {
-      //Create soundPoints
+
+      if(isNewStroke) {
+        //Create a new slot in the array
+        strokeIndex++;
+        strokes.add(new ArrayList<SoundPoint>());
+        isNewStroke = false;
+        println("created new stroke: " + strokeIndex);
+      }
+
+      //Add soundPoint to current list of soundPoints
       PVector pos = new PVector(currentPos.x, currentPos.y, currentPos.z);
       SoundPoint newPoint = new SoundPoint(pos, currentAnalogVal);
-      soundPoints.add(newPoint);
+      strokes.get(strokeIndex-1).add(newPoint);
     }
+  }
+  else {
+    //Button is not pressed
+    isNewStroke = true;
   }
 
   drawKinect();
@@ -124,7 +156,6 @@ float rotX = PI;
   * Web Server Polling
   *=========================*/
   boolean updateBrushState() {
-    try{
     getRequest.send();
     String webTxt =  getRequest.getContent();
     String [] webTxtArr = split(webTxt,':');
@@ -132,12 +163,6 @@ float rotX = PI;
     currentAnalogVal = int(webTxtArr[1]);
     buttonPressed = int(webTxtArr[0]) == 0;
     return true;
-    }
-    catch(Exception e){
-      println("no connection to web server");
-      e.printStackTrace();
-      return true;
-    }
   }
 
 
@@ -176,7 +201,7 @@ void drawKinect() {
 
       //draw different color for each hand state
       drawHandState(joints[KinectPV2.JointType_HandRight],1);
-    //  drawHandState(joints[KinectPV2.JointType_HandLeft],0);
+      drawHandState(joints[KinectPV2.JointType_HandLeft],0);
 
       //Draw body
       color col  = skeleton.getIndexColor();
@@ -192,49 +217,49 @@ void drawKinect() {
   }
   
   void drawBody(KJoint[] joints) {
-  //drawBone(joints, KinectPV2.JointType_Head, KinectPV2.JointType_Neck);
-  //drawBone(joints, KinectPV2.JointType_Neck, KinectPV2.JointType_SpineShoulder);
-  //drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_SpineMid);
+  drawBone(joints, KinectPV2.JointType_Head, KinectPV2.JointType_Neck);
+  drawBone(joints, KinectPV2.JointType_Neck, KinectPV2.JointType_SpineShoulder);
+  drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_SpineMid);
 
-  //drawBone(joints, KinectPV2.JointType_SpineMid, KinectPV2.JointType_SpineBase);
-  //drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_ShoulderRight);
-  //drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_ShoulderLeft);
-  //drawBone(joints, KinectPV2.JointType_SpineBase, KinectPV2.JointType_HipRight);
-  //drawBone(joints, KinectPV2.JointType_SpineBase, KinectPV2.JointType_HipLeft);
+  drawBone(joints, KinectPV2.JointType_SpineMid, KinectPV2.JointType_SpineBase);
+  drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_ShoulderRight);
+  drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_ShoulderLeft);
+  drawBone(joints, KinectPV2.JointType_SpineBase, KinectPV2.JointType_HipRight);
+  drawBone(joints, KinectPV2.JointType_SpineBase, KinectPV2.JointType_HipLeft);
 
   // Right Arm    
- // drawBone(joints, KinectPV2.JointType_ShoulderRight, KinectPV2.JointType_ElbowRight);
-  //drawBone(joints, KinectPV2.JointType_ElbowRight, KinectPV2.JointType_WristRight);
+  drawBone(joints, KinectPV2.JointType_ShoulderRight, KinectPV2.JointType_ElbowRight);
+  drawBone(joints, KinectPV2.JointType_ElbowRight, KinectPV2.JointType_WristRight);
   drawBone(joints, KinectPV2.JointType_WristRight, KinectPV2.JointType_HandRight);
   drawBone(joints, KinectPV2.JointType_HandRight, KinectPV2.JointType_HandTipRight);
   drawBone(joints, KinectPV2.JointType_WristRight, KinectPV2.JointType_ThumbRight);
 
   // Left Arm
-  //drawBone(joints, KinectPV2.JointType_ShoulderLeft, KinectPV2.JointType_ElbowLeft);
-  //drawBone(joints, KinectPV2.JointType_ElbowLeft, KinectPV2.JointType_WristLeft);
-  //drawBone(joints, KinectPV2.JointType_WristLeft, KinectPV2.JointType_HandLeft);
-  //drawBone(joints, KinectPV2.JointType_HandLeft, KinectPV2.JointType_HandTipLeft);
-  //drawBone(joints, KinectPV2.JointType_WristLeft, KinectPV2.JointType_ThumbLeft);
+  drawBone(joints, KinectPV2.JointType_ShoulderLeft, KinectPV2.JointType_ElbowLeft);
+  drawBone(joints, KinectPV2.JointType_ElbowLeft, KinectPV2.JointType_WristLeft);
+  drawBone(joints, KinectPV2.JointType_WristLeft, KinectPV2.JointType_HandLeft);
+  drawBone(joints, KinectPV2.JointType_HandLeft, KinectPV2.JointType_HandTipLeft);
+  drawBone(joints, KinectPV2.JointType_WristLeft, KinectPV2.JointType_ThumbLeft);
 
-  //// Right Leg
-  //drawBone(joints, KinectPV2.JointType_HipRight, KinectPV2.JointType_KneeRight);
-  //drawBone(joints, KinectPV2.JointType_KneeRight, KinectPV2.JointType_AnkleRight);
-  //drawBone(joints, KinectPV2.JointType_AnkleRight, KinectPV2.JointType_FootRight);
+  // Right Leg
+  drawBone(joints, KinectPV2.JointType_HipRight, KinectPV2.JointType_KneeRight);
+  drawBone(joints, KinectPV2.JointType_KneeRight, KinectPV2.JointType_AnkleRight);
+  drawBone(joints, KinectPV2.JointType_AnkleRight, KinectPV2.JointType_FootRight);
 
-  //// Left Leg
-  //drawBone(joints, KinectPV2.JointType_HipLeft, KinectPV2.JointType_KneeLeft);
-  //drawBone(joints, KinectPV2.JointType_KneeLeft, KinectPV2.JointType_AnkleLeft);
-  //drawBone(joints, KinectPV2.JointType_AnkleLeft, KinectPV2.JointType_FootLeft);
+  // Left Leg
+  drawBone(joints, KinectPV2.JointType_HipLeft, KinectPV2.JointType_KneeLeft);
+  drawBone(joints, KinectPV2.JointType_KneeLeft, KinectPV2.JointType_AnkleLeft);
+  drawBone(joints, KinectPV2.JointType_AnkleLeft, KinectPV2.JointType_FootLeft);
 
-  //drawJoint(joints, KinectPV2.JointType_HandTipLeft);
+  drawJoint(joints, KinectPV2.JointType_HandTipLeft);
   drawJoint(joints, KinectPV2.JointType_HandTipRight);
-  //drawJoint(joints, KinectPV2.JointType_FootLeft);
-  //drawJoint(joints, KinectPV2.JointType_FootRight);
+  drawJoint(joints, KinectPV2.JointType_FootLeft);
+  drawJoint(joints, KinectPV2.JointType_FootRight);
 
-  //drawJoint(joints, KinectPV2.JointType_ThumbLeft);
-  //drawJoint(joints, KinectPV2.JointType_ThumbRight);
+  drawJoint(joints, KinectPV2.JointType_ThumbLeft);
+  drawJoint(joints, KinectPV2.JointType_ThumbRight);
 
-  //drawJoint(joints, KinectPV2.JointType_Head);
+  drawJoint(joints, KinectPV2.JointType_Head);
 }
 
 void drawJoint(KJoint[] joints, int jointType) {
@@ -252,7 +277,7 @@ void drawHandState(KJoint joint,int findState) {
   strokeWeight(5.0f + joint.getZ()*8);
   point(joint.getX(), joint.getY(), joint.getZ());
   if(findState==1){
-//    print("\n(x,y,z) =  " + joint.getX() + "," + joint.getY() + "," + joint.getZ());
+    //print("\n(x,y,z) =  " + joint.getX() + "," + joint.getY() + "," + joint.getZ());
     currentPos.x = joint.getX();
     currentPos.y = joint.getY();
     currentPos.z = joint.getZ();
@@ -282,21 +307,36 @@ void handState(int handState) {
   *=========================*/
 
   void updateSoundState() {
-    if(soundPoints.size() == 0) {
-        return;
+    // if(soundPoints.size() == 0) {
+    //     return;
+    // }
+
+    for (ArrayList<SoundPoint> points : strokes) {
+      //Find the point with the min dist in the stroke and play
+      playClosestPoint(points);
     }
-    
-    for(SoundPoint sp : soundPoints) {
-       //Update amplitude based on distance 
-       float dist = currentPos.dist(sp.position);
-       //println("\nDist: " + dist);
-       if(dist > DIST_THRESHOLD) {
-         sp.osc.amp(0.0);
-       } else {
-         sp.osc.amp(map(dist,0.0,DIST_THRESHOLD,1.0,0.0)); 
-       }
-       
-    }
+  }
+
+  void playClosestPoint(ArrayList<SoundPoint> points) {
+      float minDist = Integer.MAX_VALUE;
+      SoundPoint point = null;
+
+      for(SoundPoint sp : points) {
+        float dist = currentPos.dist(sp.position);
+        if(dist < minDist) {
+          minDist = dist;
+          if(point != null) { point.osc.amp(0.0); } //Turn off previous minimum's sound
+          point = sp;
+        }
+        else {
+          sp.osc.amp(0.0);
+        }
+      }
+
+      if(point == null) return;
+      //Play the minimum dist
+      if(minDist > DIST_THRESHOLD) { point.osc.amp(0.0); }
+      else { point.osc.amp(map(minDist,0.0,DIST_THRESHOLD,1.0,0.0)); } 
   }
   
   /**
@@ -306,6 +346,23 @@ void handState(int handState) {
   int analogReadingToFrequency(int reading) {
      return int(map(reading, 0, 1024, 200,1500)); 
   }
+
+  /*=========================*
+   * Paint Interface
+   *=========================*/
+   /* UNCOMMENT WHEN YOU WANT TO ADD PAINT
+   void createPaint() {
+     // Now if the button is pressed, paint
+     if (buttonPressed)
+     {
+       smooth();
+       noStroke();
+       fill(colors[strokeIndex % NUM_COLORS]);
+       ellipseMode(CENTER);
+       ellipse(currentPos.x,currentPos.y,20,20); //May need to fix window size to support position
+     }
+  }
+  */
 
 
   
