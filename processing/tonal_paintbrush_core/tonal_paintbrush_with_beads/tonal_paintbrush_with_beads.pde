@@ -19,6 +19,7 @@
  */
  
  //imports
+ import beads.*;
  import http.requests.*;
  import processing.sound.*;
  import java.util.ArrayList;
@@ -32,7 +33,7 @@ import KinectPV2.*;
  final int      CUTOFF_FREQ  = 200;
  final PApplet  THIS_APP     = this;
  final int      DRAW_DELAY   = 5;
- final int      CREATE_POINT_INTERVAL = 1; //the number of DRAW_DELAYs until a point is sampled
+ final int      CREATE_POINT_INTERVAL = 5; //the number of DRAW_DELAYs until a point is sampled
  final float    DIST_THRESHOLD = 0.8;
   /**
   * SoundPoint is a class representing one of the several instances of a brush stroke
@@ -48,9 +49,15 @@ import KinectPV2.*;
    TriOsc osc;
    LowPass lpf;
    
+   WavePlayer wp;
+   Glide glide;
+   Gain gain;
+   
    SoundPoint(PVector position, int analogReading) {
      this.position = position;
      this.analogReading = analogReading;
+     
+     /**** PROCESSING SOUND LIB ****
      osc = new TriOsc(THIS_APP);
      osc.freq(analogReadingToFrequency(analogReading));
       osc.amp(0.0); //initialise with 0 amplitude
@@ -58,6 +65,15 @@ import KinectPV2.*;
       osc.play();
       lpf.process(osc,CUTOFF_FREQ);
       
+      */
+      
+     // **** Beads **** 
+     
+     wp = new WavePlayer(ac, analogReadingToFrequency(analogReading), Buffer.SINE);
+     glide = new Glide(ac, 0.0, 10);
+     gain = new Gain(ac, 1, glide);
+     gain.addInput(wp);
+     ac.out.addInput(gain);    
    }
  }
  
@@ -69,6 +85,7 @@ import KinectPV2.*;
  GetRequest getRequest;
  ArrayList<SoundPoint> soundPoints;
  int tickNumber = 0;
+ AudioContext ac;
 
  KinectPV2 kinect;
 float zVal = 300;
@@ -77,6 +94,8 @@ float rotX = PI;
 
  void setup() {
    size(1024, 768,P3D);
+   ac = new AudioContext();
+   ac.start();
    getRequest = new GetRequest(SERVER_URL);
    currentPos = new PVector(0,0,0);
    soundPoints = new ArrayList<SoundPoint>();
@@ -90,7 +109,9 @@ float rotX = PI;
    if(keyPressed) {
      if(key == 'c') {
        for(SoundPoint sp : soundPoints) {
-         sp.osc.freq(3);
+         //sp.osc.freq(3);
+         
+         sp.glide.setValue(0.0);
        }
        soundPoints.clear();
        println("cleared all sounds");
@@ -291,9 +312,9 @@ void handState(int handState) {
        float dist = currentPos.dist(sp.position);
        //println("\nDist: " + dist);
        if(dist > DIST_THRESHOLD) {
-         sp.osc.amp(0.0);
+         sp.glide.setValue(0.0);
        } else {
-         sp.osc.amp(map(dist,0.0,DIST_THRESHOLD,1.0,0.0)); 
+         sp.glide.setValue(map(dist,0.0,DIST_THRESHOLD,1.0,0.0)); 
        }
        
     }

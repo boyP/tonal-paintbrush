@@ -19,6 +19,8 @@
  */
  
  //imports
+ 
+ import beads.*;
  import http.requests.*;
  import processing.sound.*;
  import java.util.ArrayList;
@@ -32,7 +34,7 @@
  final int      CUTOFF_FREQ  = 200;
  final PApplet  THIS_APP     = this;
  final int      DRAW_DELAY   = 5;
- final int      CREATE_POINT_INTERVAL = 7; //the number of DRAW_DELAYs until a point is sampled
+ final int      CREATE_POINT_INTERVAL = 1; //the number of DRAW_DELAYs until a point is sampled
  final float    DIST_THRESHOLD = 0.8;
   /**
   * SoundPoint is a class representing one of the several instances of a brush stroke
@@ -48,15 +50,31 @@
    TriOsc osc;
    LowPass lpf;
    
+   WavePlayer wp;
+   Glide glide;
+   Gain gain;
+   
+   
+   
    SoundPoint(PVector position, int analogReading) {
      this.position = position;
      this.analogReading = analogReading;
+     
+     /**
      osc = new TriOsc(THIS_APP);
      osc.freq(analogReadingToFrequency(analogReading));
       osc.amp(0.0); //initialise with 0 amplitude
       lpf = new LowPass(THIS_APP);
       osc.play();
       lpf.process(osc,CUTOFF_FREQ);
+      */
+       // **** Beads **** 
+     
+     wp = new WavePlayer(ac, analogReadingToFrequency(analogReading), Buffer.SINE);
+     glide = new Glide(ac, 0.0, 10);
+     gain = new Gain(ac, 1, glide);
+     gain.addInput(wp);
+     ac.out.addInput(gain);   
       
    }
  }
@@ -68,6 +86,7 @@
  int currentASV;
  PVector currentPos;
  GetRequest getRequest;
+  AudioContext ac;
  // ArrayList<SoundPoint> soundPoints;
 
  int strokeIndex = 0;
@@ -79,7 +98,7 @@
  float rotX = PI;
  
  //Colors 
- /* UNCOMMENT WHEN YOU WANT TO ADD PAINT
+ /* UNCOMMENT WHEN YOU WANT TO ADD PAINT*/
  final int NUM_COLORS = 9;
  int Green = #009688;
  int Yellow = #FFEB3B;
@@ -91,10 +110,12 @@
  int Brown = #795548;
  int Pink = #F8BBD0;
  int[] colors = {Green, Yellow, Red, Blue, Lime, Orange, Purple, Brown, Pink};
- */
+ /**/
 
  void setup() {
    size(1024, 768,P3D);
+   ac = new AudioContext();
+   ac.start();
    getRequest = new GetRequest(SERVER_URL);
    currentPos = new PVector(0,0,0);
    // soundPoints = new ArrayList<SoundPoint>();
@@ -107,6 +128,22 @@
  void draw() {
 
   delay(DRAW_DELAY);
+  
+  //Clear all
+  if(keyPressed) {
+    if(key == 'C') {
+      for(ArrayList<SoundPoint> stroke : strokes) {
+         //sp.osc.freq(3);
+         for(SoundPoint sp : stroke) {
+             sp.glide.setValue(0.0);
+         }
+       }
+      strokeIndex = 0;
+      isNewStroke = true;
+      strokes.clear();
+      println("Removing all sounds");
+    }
+  }
   
   tickNumber++;
   
@@ -140,6 +177,7 @@
   }
 
   drawKinect();
+  createPaint();
  }
  
  
@@ -192,12 +230,12 @@ void drawKinect() {
 
       //draw different color for each hand state
       drawHandState(joints[KinectPV2.JointType_HandRight],1);
-      drawHandState(joints[KinectPV2.JointType_HandLeft],0);
+      //drawHandState(joints[KinectPV2.JointType_HandLeft],0);
 
       //Draw body
-      color col  = skeleton.getIndexColor();
-      stroke(col);
-      drawBody(joints);
+      //color col  = skeleton.getIndexColor();
+      //stroke(col);
+      //drawBody(joints);
     }
   }
   popMatrix();
@@ -207,7 +245,7 @@ void drawKinect() {
   text(frameRate, 50, 50);
   }
   
-  void drawBody(KJoint[] joints) {
+  void drawBody(KJoint[] joints) {/*
   drawBone(joints, KinectPV2.JointType_Head, KinectPV2.JointType_Neck);
   drawBone(joints, KinectPV2.JointType_Neck, KinectPV2.JointType_SpineShoulder);
   drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_SpineMid);
@@ -250,7 +288,7 @@ void drawKinect() {
   drawJoint(joints, KinectPV2.JointType_ThumbLeft);
   drawJoint(joints, KinectPV2.JointType_ThumbRight);
 
-  drawJoint(joints, KinectPV2.JointType_Head);
+  drawJoint(joints, KinectPV2.JointType_Head);*/
 }
 
 void drawJoint(KJoint[] joints, int jointType) {
@@ -268,7 +306,7 @@ void drawHandState(KJoint joint,int findState) {
   strokeWeight(5.0f + joint.getZ()*8);
   point(joint.getX(), joint.getY(), joint.getZ());
   if(findState==1){
-    print("\n(x,y,z) =  " + joint.getX() + "," + joint.getY() + "," + joint.getZ());
+    //print("\n(x,y,z) =  " + joint.getX() + "," + joint.getY() + "," + joint.getZ());
     currentPos.x = joint.getX();
     currentPos.y = joint.getY();
     currentPos.z = joint.getZ();
@@ -316,18 +354,18 @@ void handState(int handState) {
         float dist = currentPos.dist(sp.position);
         if(dist < minDist) {
           minDist = dist;
-          if(point != null) { point.osc.amp(0.0); } //Turn off previous minimum's sound
+          if(point != null) { point.glide.setValue(0.0); } //Turn off previous minimum's sound
           point = sp;
         }
         else {
-          sp.osc.amp(0.0);
+          sp.glide.setValue(0.0);
         }
       }
 
       if(point == null) return;
       //Play the minimum dist
-      if(minDist > DIST_THRESHOLD) { point.osc.amp(0.0); }
-      else { point.osc.amp(map(minDist,0.0,DIST_THRESHOLD,1.0,0.0)); } 
+      if(minDist > DIST_THRESHOLD) { point.glide.setValue(0.0); }
+      else { point.glide.setValue(map(minDist,0.0,DIST_THRESHOLD,1.0,0.0)); } 
   }
   
   /**
@@ -341,7 +379,7 @@ void handState(int handState) {
   /*=========================*
    * Paint Interface
    *=========================*/
-   /* UNCOMMENT WHEN YOU WANT TO ADD PAINT
+   /* UNCOMMENT WHEN YOU WANT TO ADD PAINT*/
    void createPaint() {
      // Now if the button is pressed, paint
      if (buttonPressed)
@@ -351,9 +389,9 @@ void handState(int handState) {
        fill(colors[strokeIndex % NUM_COLORS]);
        ellipseMode(CENTER);
        ellipse(currentPos.x,currentPos.y,20,20); //May need to fix window size to support position
+       rect(10,10, 50,50);
      }
   }
-  */
 
 
   

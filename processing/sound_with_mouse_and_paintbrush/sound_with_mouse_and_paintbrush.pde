@@ -13,13 +13,13 @@ final int DIST_THRESHOLD = 300;
 
 class SoundPoint {
    public int x,y;
-   public SqrOsc osc;
+   public SawOsc osc;
    public LowPass lpf;
    
    public SoundPoint(int x, int y, int frequency) {
       this.x = x;
       this.y = y;
-      osc = new SqrOsc(THIS_APP);
+      osc = new SawOsc(THIS_APP);
       osc.freq(frequency);
       osc.amp(0.0);
       lpf = new LowPass(THIS_APP);
@@ -29,7 +29,7 @@ class SoundPoint {
    }
 }
 
-ArrayList<SqrOsc> oscArray;
+ArrayList<SawOsc> oscArray;
 ArrayList<LowPass> lpfArray;
 ArrayList<SoundPoint> soundPoints;
 
@@ -51,7 +51,7 @@ float amp=0.0;
 void setup() {
   size(500, 700);
   req = new GetRequest("http://192.168.4.1:80");
-  oscArray = new ArrayList<SqrOsc>();
+  oscArray = new ArrayList<SawOsc>();
   lpfArray = new ArrayList<LowPass>();
   soundPoints = new ArrayList<SoundPoint>();
   
@@ -80,7 +80,7 @@ void updateSoundState() {
    if(soundPoints.size() > 0) {
     for(SoundPoint soundPoint : soundPoints) {
        float dist = sqrt(pow(soundPoint.x - mouseX,2) + pow(soundPoint.y - mouseY,2));
-       SqrOsc currOsc = soundPoint.osc;
+       SawOsc currOsc = soundPoint.osc;
        
        if(dist > DIST_THRESHOLD) {
           currOsc.amp(0.0); 
