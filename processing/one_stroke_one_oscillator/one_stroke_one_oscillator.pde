@@ -90,8 +90,6 @@
    Gain gain;
   public Stroke(SoundPoint closestPoint) {
       this.points = new ArrayList<SoundPoint>();
-      points.add(closestPoint);
-      this.points = points;
       this.closestPoint = closestPoint;
       wp = new WavePlayer(ac, 10.0, Buffer.SINE);
       glide = new Glide(ac, 0.0, 10);
@@ -113,7 +111,7 @@
  // ArrayList<SoundPoint> soundPoints;
 
  int strokeIndex = 0;
- ArrayList<ArrayList<SoundPoint>> strokes;
+ //ArrayList<ArrayList<SoundPoint>> strokes;
  ArrayList<Stroke> allStrokes;
  int tickNumber = 0;
 
@@ -145,7 +143,7 @@
    currentPos = new PVector(0,0,0);
    // soundPoints = new ArrayList<SoundPoint>();
 
-   strokes = new ArrayList<ArrayList<SoundPoint>>();
+   //strokes = new ArrayList<ArrayList<SoundPoint>>();
    //Kinect Setup
    setupKinect();
  }
@@ -167,7 +165,7 @@
       isNewStroke = true;
       ac = new AudioContext(); //reset audio context
       ac.start();
-      strokes.clear();
+      //strokes.clear();
       println("Removing all sounds");
     }
   }
@@ -194,12 +192,14 @@
         Stroke newStroke = new Stroke(newPoint);
         allStrokes.add(newStroke);
         
-        strokes.add(new ArrayList<SoundPoint>());
+        //strokes.add(new ArrayList<SoundPoint>());
         isNewStroke = false;
         //println("created new stroke: " + strokeIndex);
-      }
-
-      strokes.get(strokeIndex-1).add(newPoint);
+      } 
+    
+   
+         //Adds additional sound points to the current stroke
+         allStrokes.get(strokeIndex-1).points.add(newPoint);     
     }
   }
   else {
