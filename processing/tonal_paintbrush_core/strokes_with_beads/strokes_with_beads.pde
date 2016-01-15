@@ -79,6 +79,17 @@
    }
  }
  
+ class Stroke{
+  ArrayList<SoundPoint> points;
+  SoundPoint closestPoint; //closest point to current position
+  
+  public Stroke(ArrayList<SoundPoint> points, SoundPoint closestPoint) {
+      this.points = points;
+      this.closestPoint = closestPoint;
+  }
+   
+ }
+ 
  //Fields
  boolean buttonPressed = false;
  boolean isNewStroke = true;
@@ -131,7 +142,8 @@
   
   //Clear all
   if(keyPressed) {
-    if(key == 'C') {
+    if(key == 'c') {
+      
       for(ArrayList<SoundPoint> stroke : strokes) {
          //sp.osc.freq(3);
          for(SoundPoint sp : stroke) {
@@ -140,6 +152,8 @@
        }
       strokeIndex = 0;
       isNewStroke = true;
+      ac = new AudioContext(); //reset audio context
+      ac.start();
       strokes.clear();
       println("Removing all sounds");
     }
@@ -162,7 +176,7 @@
         strokeIndex++;
         strokes.add(new ArrayList<SoundPoint>());
         isNewStroke = false;
-        println("created new stroke: " + strokeIndex);
+        //println("created new stroke: " + strokeIndex);
       }
 
       //Add soundPoint to current list of soundPoints
@@ -189,6 +203,10 @@
     String webTxt =  getRequest.getContent();
     String [] webTxtArr = split(webTxt,':');
     
+    if(webTxtArr.length < 2) {
+      println("CHECK WIFI CONNECTION");
+       return false; 
+    }
     currentAnalogVal = int(webTxtArr[1]);
     buttonPressed = int(webTxtArr[0]) == 0;
     return true;
@@ -373,7 +391,7 @@ void handState(int handState) {
   *
   */
   int analogReadingToFrequency(int reading) {
-     return int(map(reading, 0, 1024, 200,1500)); 
+     return int(map(reading, 0, 1024, 200,900)); 
   }
 
   /*=========================*
