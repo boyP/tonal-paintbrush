@@ -79,6 +79,17 @@
    }
  }
  
+ class Stroke{
+  ArrayList<SoundPoint> points;
+  SoundPoint closestPoint; //closest point to current position
+  
+  public Stroke(ArrayList<SoundPoint> points, SoundPoint closestPoint) {
+      this.points = points;
+      this.closestPoint = closestPoint;
+  }
+   
+ }
+ 
  //Fields
  boolean buttonPressed = false;
  boolean isNewStroke = true;
@@ -142,6 +153,7 @@
       strokeIndex = 0;
       isNewStroke = true;
       ac = new AudioContext(); //reset audio context
+      ac.start();
       strokes.clear();
       println("Removing all sounds");
     }
