@@ -33,7 +33,7 @@ import KinectPV2.*;
  final int      CUTOFF_FREQ  = 200;
  final PApplet  THIS_APP     = this;
  final int      DRAW_DELAY   = 5;
- final int      CREATE_POINT_INTERVAL = 1; //the number of DRAW_DELAYs until a point is sampled
+ final int      CREATE_POINT_INTERVAL = 5; //the number of DRAW_DELAYs until a point is sampled
  final float    DIST_THRESHOLD = 0.8;
   /**
   * SoundPoint is a class representing one of the several instances of a brush stroke

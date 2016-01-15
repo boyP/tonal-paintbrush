@@ -79,7 +79,7 @@
  float rotX = PI;
  
  //Colors 
- /* UNCOMMENT WHEN YOU WANT TO ADD PAINT
+ /* UNCOMMENT WHEN YOU WANT TO ADD PAINT*/
  final int NUM_COLORS = 9;
  int Green = #009688;
  int Yellow = #FFEB3B;
@@ -91,7 +91,7 @@
  int Brown = #795548;
  int Pink = #F8BBD0;
  int[] colors = {Green, Yellow, Red, Blue, Lime, Orange, Purple, Brown, Pink};
- */
+ /**/
 
  void setup() {
    size(1024, 768,P3D);
@@ -113,7 +113,8 @@
     if(key == 'C') {
       strokeIndex = 0;
       isNewStroke = true;
-      strokes = new ArrayList<ArrayList<SoundPoint>>();
+      strokes.clear();
+      println("Removing all sounds");
     }
   }
   
@@ -149,6 +150,7 @@
   }
 
   drawKinect();
+  createPaint();
  }
  
  
@@ -181,7 +183,7 @@ void setupKinect() {
  }
   
 void drawKinect() {
-    background(0);
+    //background(0);
 
   image(kinect.getColorImage(), 0, 0, 320, 240);
 
@@ -201,12 +203,12 @@ void drawKinect() {
 
       //draw different color for each hand state
       drawHandState(joints[KinectPV2.JointType_HandRight],1);
-      drawHandState(joints[KinectPV2.JointType_HandLeft],0);
+      //drawHandState(joints[KinectPV2.JointType_HandLeft],0);
 
       //Draw body
-      color col  = skeleton.getIndexColor();
-      stroke(col);
-      drawBody(joints);
+      //color col  = skeleton.getIndexColor();
+      //stroke(col);
+      //drawBody(joints);
     }
   }
   popMatrix();
@@ -216,7 +218,7 @@ void drawKinect() {
   text(frameRate, 50, 50);
   }
   
-  void drawBody(KJoint[] joints) {
+  void drawBody(KJoint[] joints) {/*
   drawBone(joints, KinectPV2.JointType_Head, KinectPV2.JointType_Neck);
   drawBone(joints, KinectPV2.JointType_Neck, KinectPV2.JointType_SpineShoulder);
   drawBone(joints, KinectPV2.JointType_SpineShoulder, KinectPV2.JointType_SpineMid);
@@ -259,7 +261,7 @@ void drawKinect() {
   drawJoint(joints, KinectPV2.JointType_ThumbLeft);
   drawJoint(joints, KinectPV2.JointType_ThumbRight);
 
-  drawJoint(joints, KinectPV2.JointType_Head);
+  drawJoint(joints, KinectPV2.JointType_Head);*/
 }
 
 void drawJoint(KJoint[] joints, int jointType) {
@@ -350,7 +352,7 @@ void handState(int handState) {
   /*=========================*
    * Paint Interface
    *=========================*/
-   /* UNCOMMENT WHEN YOU WANT TO ADD PAINT
+   /* UNCOMMENT WHEN YOU WANT TO ADD PAINT*/
    void createPaint() {
      // Now if the button is pressed, paint
      if (buttonPressed)
@@ -360,9 +362,9 @@ void handState(int handState) {
        fill(colors[strokeIndex % NUM_COLORS]);
        ellipseMode(CENTER);
        ellipse(currentPos.x,currentPos.y,20,20); //May need to fix window size to support position
+       rect(10,10, 50,50);
      }
   }
-  */
 
 
   
